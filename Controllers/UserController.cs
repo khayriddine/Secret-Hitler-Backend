@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Models;
+using Secret_Hitler_Backend.Models;
 using Secret_Hitler_Backend.Databases;
 using Secret_Hitler_Backend.Services;
 using System;

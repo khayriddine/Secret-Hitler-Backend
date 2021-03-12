@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Models;
+using Secret_Hitler_Backend.Models;
 using System.Linq;
 namespace Secret_Hitler_Backend.Services
 {

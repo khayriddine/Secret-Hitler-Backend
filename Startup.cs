@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Secret_Hitler_Backend.Databases;
+using Secret_Hitler_Backend.Hubs;
 using Secret_Hitler_Backend.Services;
 
 namespace Secret_Hitler_Backend
@@ -34,12 +35,13 @@ namespace Secret_Hitler_Backend
                 option => option.UseMySQL(Configuration.GetConnectionString("SecretHitler"))
                 ) ;
             services.AddSingleton<IUserService, UserInMemoryService>();
+            services.AddSignalR();
             services.AddCors(options =>
             {
                 options.AddPolicy(name: MyAllowSpecificOrigins,
                                   builder =>
                                   {
-                                      builder.WithOrigins("http://localhost:4200")
+                                      builder.WithOrigins("http://localhost:4200").AllowCredentials()
                                                     .AllowAnyHeader()
                                                   .AllowAnyMethod();
                                   });
@@ -65,6 +67,7 @@ namespace Secret_Hitler_Backend
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapHub<GameHub>("/gamrhub");
             });
         }
     }

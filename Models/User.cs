@@ -1,6 +1,7 @@
 using System;
 
-namespace Models{
+namespace Secret_Hitler_Backend.Models
+{
     public class User{
         public int UserId { get; set; }
         public string Name { get; set; }
