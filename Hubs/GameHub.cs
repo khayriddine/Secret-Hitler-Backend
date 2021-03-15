@@ -54,6 +54,38 @@ namespace Secret_Hitler_Backend.Hubs
                 Console.WriteLine("RegisterUser.ex: "+ ex.Message);
             }
         }
+        public Task GetCurrentRound(int roomId)
+        {
+            try
+            {
+                if (games.ContainsKey(roomId))
+                {
+                    return Clients.Caller.SendAsync("CurrentRoundUpdated", games[roomId].CurrentRound);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("RegisterUser.ex: " + ex.Message);
+                Clients.All.SendAsync("GetError", "GetCurrentRound.ex: " + ex.Message);
+            }
+            return Clients.Caller.SendAsync("GetError", "GetCurrentRound.ex: Room does not exists");
+        }
+        public Task GetCurrentGame(int roomId)
+        {
+            try
+            {
+                if (games.ContainsKey(roomId))
+                {
+                    return Clients.Caller.SendAsync("LoadingGame", games[roomId]);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("GetCurrentGame.ex : "+ex.Message);
+            }
+            return Clients.Caller.SendAsync("GetError", "GetCurrentGame.ex: game does not exists");
+        }
         public void CreateRoom(Room room)
         {
             try
@@ -131,9 +163,9 @@ namespace Secret_Hitler_Backend.Hubs
             catch (Exception ex)
             {
                 Console.WriteLine("JoinRoom.ex: " + ex.Message);
-                return Clients.All.SendAsync("GetError", "LeaveRoom.ex: " + ex.Message);
+                return Clients.Caller.SendAsync("GetError", "LeaveRoom.ex: " + ex.Message);
             }
-            return Clients.All.SendAsync("GetInfo", "No room with the specifed Id");
+            return Clients.Caller.SendAsync("GetInfo", "No room with the specifed Id");
         }
         public Task RemoveRoom(int roomId)
         {
@@ -236,12 +268,309 @@ namespace Secret_Hitler_Backend.Hubs
             catch (Exception ex)
             {
                 Console.WriteLine("PlayerIsReady.ex: " + ex.Message);
-                return Clients.All.SendAsync("GetError", "PlayerIsReady.ex: " + ex.Message);
+                return Clients.Caller.SendAsync("GetError", "PlayerIsReady.ex: " + ex.Message);
             }
-            return Clients.All.SendAsync("GetError", "PlayerIsReady.ex: game is null");
+            return Clients.Caller.SendAsync("GetError", "PlayerIsReady.ex: game is null");
 
         }
+        public Task VoteOnChancellor(int roomId, Vote vote)
+        {
+            try
+            {
 
+                if (games.ContainsKey(roomId))
+                {
+                    var game = games[roomId];
+                    List<string> cnxs = new List<string>();
+                    foreach (var u in game.Players)
+                    {
+                        cnxs.Add(cnxIds[u.UserId]);
+                    }
+                    lock (game)
+                    {
+
+                        if (game.CanPlayerVote(vote))
+                        {
+                            game.MakeVote(vote);
+                            if (game.AllPalyerVoted == true)
+                            {
+                                game.CalculateVoteResults(VoteScope.Chancellor);
+                                Clients.Clients(cnxs).SendAsync("VoteResult", game.CurrentRound.VoteResults);
+                                game.ProceedAfterVote();
+                                if(game.GameResult != null)
+                                {
+                                    games.Remove(roomId);
+                                    rooms.Remove(roomId);
+                                    return Clients.Clients(cnxs).SendAsync("GameEnd",game);
+                                }
+                                else
+                                {
+                                    
+                                    if(game.CurrentRound.RoundState == RoundState.PickChancellor)
+                                    {
+                                        return Clients.Clients(cnxs).SendAsync("NewTurn", game);
+                                    }
+                                    else
+                                    {
+                                        return Clients.Clients(cnxs).SendAsync("CurrentRoundUpdated", game.CurrentRound);
+                                    }
+                                    
+                                }
+                            }
+                            else
+                                return Clients.Clients(cnxs).SendAsync("PlayerVoted");
+                        }
+                        else
+                        {
+                            return Clients.Clients(cnxs).SendAsync("GetError", "VoteOnChancellor.ex: player cant vote: "+vote.UserId.ToString());
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("VoteOnChancellor.ex: " + ex.Message);
+                return Clients.Caller.SendAsync("GetError", "VoteOnChancellor.ex: " + ex.Message);
+            }
+            return Clients.Caller.SendAsync("GetError", "VoteOnChancellor.ex: game is null");
+        }
+        public Task VoteOnVeto(int roomId,Vote vote)
+        {
+            try
+            {
+                if (games.ContainsKey(roomId))
+                {
+                    var game = games[roomId];
+                    lock (game)
+                    {
+                        List<string> cnxs = new List<string>();
+                        foreach (var u in game.Players)
+                        {
+                            cnxs.Add(cnxIds[u.UserId]);
+                        }
+
+                        if(vote != null)
+                        {
+                            if(vote.VoteValue == VoteValue.No)
+                            {
+                                game.CurrentRound.RoundState = RoundState.VetoRefused;
+                                return Clients.Clients(cnxs).SendAsync("CurrentRoundUpdated", game.CurrentRound);
+                            }
+                            else
+                            {
+                                game.MoveToNextTurn();
+                                return Clients.Clients(cnxs).SendAsync("NewTurn", game);
+                            }
+
+                        }
+                        else
+                            return Clients.Caller.SendAsync("GetError", "VoteOnVeto.ex: vote is null");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("VoteOnVeto.ex: " + ex.Message);
+                return Clients.Caller.SendAsync("GetError", "VoteOnVeto.ex: " + ex.Message);
+            }
+            return Clients.Caller.SendAsync("GetError", "VoteOnVeto.ex: game is null");
+        }
+        public Task DiscardCard(int roomId,int discarded)
+        {
+            try
+            {
+                if (games.ContainsKey(roomId))
+                {
+                    var game = games[roomId];
+                    lock (game)
+                    {
+                        List<string> cnxs = new List<string>();
+                        foreach (var u in game.Players)
+                        {
+                            cnxs.Add(cnxIds[u.UserId]);
+                        }
+                        game.DiscardCard(discarded);
+                        if(game.CurrentRound.CardsInHand.Count == 1)
+                        {
+                            game.MakeActionBeforeEnd();
+                        }
+                        switch (game.CurrentRound.RoundState)
+                        {
+                            case RoundState.End:
+                                games.Remove(roomId);
+                                rooms.Remove(roomId);
+                                return Clients.Clients(cnxs).SendAsync("GameEnd", game);
+                            case RoundState.PickChancellor :
+                                return Clients.Clients(cnxs).SendAsync("NewTurn", game);
+                            case RoundState.KillMember:
+                                return Clients.Clients(cnxs).SendAsync("NewTurn", game);
+                            default:
+                                return Clients.Clients(cnxs).SendAsync("CurrentRoundUpdated", game.CurrentRound);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("DiscardCard.ex: " + ex.Message);
+                return Clients.Caller.SendAsync("GetError", "DiscardCard.ex: " + ex.Message);
+            }
+            return Clients.Caller.SendAsync("GetError", "DiscardCard.ex: game is null");
+        }
+        public Task InvestigatePlayer(int roomId, int playerId)
+        {
+            try
+            {
+                if (games.ContainsKey(roomId))
+                {
+                    var game = games[roomId];
+                    lock (game)
+                    {
+                        List<string> cnxs = new List<string>();
+                        foreach (var u in game.Players)
+                        {
+                            cnxs.Add(cnxIds[u.UserId]);
+                        }
+                        var player = game.GetPlayerById(playerId);
+                        if(player != null)
+                        {
+                            game.CurrentRound.RoundState = RoundState.MembershipInvestigated;
+                            return Clients.Clients(cnxs).SendAsync("CurrentRoundUpdated", game.CurrentRound);
+                        }else
+                        {
+                            return Clients.Caller.SendAsync("GetError", "PickNextPresident.ex: did not find the player");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("PickNextPresident.ex: " + ex.Message);
+                return Clients.Caller.SendAsync("GetError", "PickNextPresident.ex: " + ex.Message);
+            }
+            return Clients.Caller.SendAsync("GetError", "PickNextPresident.ex: game is null");
+        }
+        public Task MoveToNextTurn(int roomId)
+        {
+            try
+            {
+                if (games.ContainsKey(roomId))
+                {
+                    var game = games[roomId];
+                    lock (game)
+                    {
+                        List<string> cnxs = new List<string>();
+                        foreach (var u in game.Players)
+                        {
+                            cnxs.Add(cnxIds[u.UserId]);
+                        }
+                        game.MoveToNextTurn();
+                        return Clients.Clients(cnxs).SendAsync("CurrentRoundUpdated", game.CurrentRound);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("PickNextPresident.ex: " + ex.Message);
+                return Clients.Caller.SendAsync("GetError", "PickNextPresident.ex: " + ex.Message);
+            }
+            return Clients.Caller.SendAsync("GetError", "PickNextPresident.ex: game is null");
+        }
+        public Task PickNextPresident(int roomId,int playerId)
+        {
+            try
+            {
+                if (games.ContainsKey(roomId))
+                {
+                    var game = games[roomId];
+                    lock (game)
+                    {
+                        List<string> cnxs = new List<string>();
+                        foreach (var u in game.Players)
+                        {
+                            cnxs.Add(cnxIds[u.UserId]);
+                        }
+                        var player = game.GetPlayerById(playerId);
+                        if (player != null)
+                        {
+                            game.PickNextPresident(playerId);
+                            return Clients.Clients(cnxs).SendAsync("CurrentRoundUpdated", game.CurrentRound);
+                        }
+                        else
+                        {
+                            return Clients.Caller.SendAsync("GetError", "PickNextPresident.ex: did not find the player");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("PickNextPresident.ex: " + ex.Message);
+                return Clients.Caller.SendAsync("GetError", "PickNextPresident.ex: " + ex.Message);
+            }
+            return Clients.Caller.SendAsync("GetError", "PickNextPresident.ex: game is null");
+        }
+        public Task KillPlayer(int roomId, int playerId)
+        {
+            try
+            {
+                if (games.ContainsKey(roomId))
+                {
+                    var game = games[roomId];
+                    lock (game)
+                    {
+                        List<string> cnxs = new List<string>();
+                        foreach (var u in game.Players)
+                        {
+                            cnxs.Add(cnxIds[u.UserId]);
+                        }
+                        game.KillPlayer(playerId);
+                        if (game.GameResult != null)
+                        {
+                            games.Remove(roomId);
+                            rooms.Remove(roomId);
+                            return Clients.Clients(cnxs).SendAsync("GameEnd", game);
+                        }
+                        else
+                        {
+                            return Clients.Clients(cnxs).SendAsync("CurrentRoundUpdated", game.CurrentRound);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("KillPlayer.ex: " + ex.Message);
+                return Clients.Caller.SendAsync("GetError", "KillPlayer.ex: " + ex.Message);
+            }
+            return Clients.Caller.SendAsync("GetError", "KillPlayer.ex: game is null");
+        }
+        public Task RequestVeto(int roomId)
+        {
+            try
+            {
+                if (games.ContainsKey(roomId))
+                {
+                    var game = games[roomId];
+                    lock (game)
+                    {
+                        List<string> cnxs = new List<string>();
+                        foreach (var u in game.Players)
+                        {
+                            cnxs.Add(cnxIds[u.UserId]);
+                        }
+                        game.CurrentRound.RoundState = RoundState.VetoRequested;
+                        return Clients.Clients(cnxs).SendAsync("CurrentRoundUpdated", game.CurrentRound);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("RequestVeto.ex: " + ex.Message);
+                return Clients.Caller.SendAsync("GetError", "RequestVeto.ex: " + ex.Message);
+            }
+            return Clients.Caller.SendAsync("GetError", "RequestVeto.ex: game is null");
+        }
         public override async Task OnConnectedAsync()
         {
 

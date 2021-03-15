@@ -34,7 +34,13 @@ namespace Secret_Hitler_Backend.Models
     }
     public enum RoundState
     {
-        Idle,PickPresident,Vote,
+        Start,Idle, PickChancellor, Vote, PresidentDiscard, ChancellorDiscard, ForcedCard, 
+        InvestigateMembership, PickNextPresident, KillMember, PeekNextCards, MembershipInvestigated,
+        VetoRequested,VetoRefused, End
+    }
+    public enum VoteScope
+    {
+        Chancellor, Veto
     }
 }
 
