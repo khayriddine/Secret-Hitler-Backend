@@ -77,7 +77,7 @@ namespace Secret_Hitler_Backend.Hubs
             {
                 if (games.ContainsKey(roomId))
                 {
-                    return Clients.Caller.SendAsync("LoadingGame", games[roomId]);
+                    return Clients.Caller.SendAsync("UpdateGame", games[roomId]);
                 }
             }
             catch (Exception ex)
@@ -206,7 +206,7 @@ namespace Secret_Hitler_Backend.Hubs
                 Console.WriteLine("Play.ex: "+ ex.Message);
                 return Clients.Caller.SendAsync("GetError", "Play.ex: " + ex.Message);
             }
-            return Clients.Clients(cnxs).SendAsync("LoadingGame",games[roomId]);
+            return Clients.Clients(cnxs).SendAsync("UpdateGame",games[roomId]);
         }
         public Task NominateChancellor(int prezId,int chancId,int roomId)
         {
@@ -223,7 +223,9 @@ namespace Secret_Hitler_Backend.Hubs
                         {
                             cnxs.Add(cnxIds[u.UserId]);
                         }
-                        return Clients.Clients(cnxs).SendAsync("CurrentRoundUpdated", game.CurrentRound);
+                        //return Clients.Clients(cnxs).SendAsync("CurrentRoundUpdated", game.CurrentRound);
+                        return Clients.Clients(cnxs).SendAsync("UpdateGame", game);
+
                     }
                     else
                     {
@@ -305,15 +307,15 @@ namespace Secret_Hitler_Backend.Hubs
                                 }
                                 else
                                 {
-                                    
-                                    if(game.CurrentRound.RoundState == RoundState.PickChancellor)
+                                    return Clients.Clients(cnxs).SendAsync("UpdateGame", game);/*
+                                    if (game.CurrentRound.RoundState == RoundState.PickChancellor)
                                     {
                                         return Clients.Clients(cnxs).SendAsync("NewTurn", game);
                                     }
                                     else
                                     {
                                         return Clients.Clients(cnxs).SendAsync("CurrentRoundUpdated", game.CurrentRound);
-                                    }
+                                    }*/
                                     
                                 }
                             }
@@ -354,13 +356,14 @@ namespace Secret_Hitler_Backend.Hubs
                             if(vote.VoteValue == VoteValue.No)
                             {
                                 game.CurrentRound.RoundState = RoundState.VetoRefused;
-                                return Clients.Clients(cnxs).SendAsync("CurrentRoundUpdated", game.CurrentRound);
+                                //return Clients.Clients(cnxs).SendAsync("CurrentRoundUpdated", game.CurrentRound);
                             }
                             else
                             {
                                 game.MoveToNextTurn();
-                                return Clients.Clients(cnxs).SendAsync("NewTurn", game);
+                                //return Clients.Clients(cnxs).SendAsync("NewTurn", game);
                             }
+                            return Clients.Clients(cnxs).SendAsync("UpdateGame", game);
 
                         }
                         else
@@ -400,12 +403,12 @@ namespace Secret_Hitler_Backend.Hubs
                                 games.Remove(roomId);
                                 rooms.Remove(roomId);
                                 return Clients.Clients(cnxs).SendAsync("GameEnd", game);
-                            case RoundState.PickChancellor :
+                            /*case RoundState.PickChancellor :
                                 return Clients.Clients(cnxs).SendAsync("NewTurn", game);
                             case RoundState.KillMember:
-                                return Clients.Clients(cnxs).SendAsync("NewTurn", game);
+                                return Clients.Clients(cnxs).SendAsync("NewTurn", game);*/
                             default:
-                                return Clients.Clients(cnxs).SendAsync("CurrentRoundUpdated", game.CurrentRound);
+                                return Clients.Clients(cnxs).SendAsync("UpdateGame", game);
                         }
                     }
                 }
@@ -435,8 +438,10 @@ namespace Secret_Hitler_Backend.Hubs
                         if(player != null)
                         {
                             game.CurrentRound.RoundState = RoundState.MembershipInvestigated;
-                            return Clients.Clients(cnxs).SendAsync("CurrentRoundUpdated", game.CurrentRound);
-                        }else
+                            return Clients.Clients(cnxs).SendAsync("UpdateGame", game);
+                            //return Clients.Clients(cnxs).SendAsync("CurrentRoundUpdated", game.CurrentRound);
+                        }
+                        else
                         {
                             return Clients.Caller.SendAsync("GetError", "PickNextPresident.ex: did not find the player");
                         }
@@ -465,7 +470,8 @@ namespace Secret_Hitler_Backend.Hubs
                             cnxs.Add(cnxIds[u.UserId]);
                         }
                         game.MoveToNextTurn();
-                        return Clients.Clients(cnxs).SendAsync("CurrentRoundUpdated", game.CurrentRound);
+                        return Clients.Clients(cnxs).SendAsync("UpdateGame", game);
+                        //return Clients.Clients(cnxs).SendAsync("CurrentRoundUpdated", game.CurrentRound);
                     }
                 }
             }
@@ -494,7 +500,8 @@ namespace Secret_Hitler_Backend.Hubs
                         if (player != null)
                         {
                             game.PickNextPresident(playerId);
-                            return Clients.Clients(cnxs).SendAsync("CurrentRoundUpdated", game.CurrentRound);
+                            return Clients.Clients(cnxs).SendAsync("UpdateGame", game);
+                            //return Clients.Clients(cnxs).SendAsync("CurrentRoundUpdated", game.CurrentRound);
                         }
                         else
                         {
@@ -533,7 +540,8 @@ namespace Secret_Hitler_Backend.Hubs
                         }
                         else
                         {
-                            return Clients.Clients(cnxs).SendAsync("CurrentRoundUpdated", game.CurrentRound);
+                            return Clients.Clients(cnxs).SendAsync("UpdateGame", game);
+                            //return Clients.Clients(cnxs).SendAsync("CurrentRoundUpdated", game.CurrentRound);
                         }
                     }
                 }
@@ -560,7 +568,8 @@ namespace Secret_Hitler_Backend.Hubs
                             cnxs.Add(cnxIds[u.UserId]);
                         }
                         game.CurrentRound.RoundState = RoundState.VetoRequested;
-                        return Clients.Clients(cnxs).SendAsync("CurrentRoundUpdated", game.CurrentRound);
+                        return Clients.Clients(cnxs).SendAsync("UpdateGame", game);
+                        //return Clients.Clients(cnxs).SendAsync("CurrentRoundUpdated", game.CurrentRound);
                     }
                 }
             }

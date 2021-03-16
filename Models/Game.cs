@@ -50,9 +50,10 @@ namespace Secret_Hitler_Backend.Models
 
         private void PreparePlayers(List<User> users)
         {
+            Role[] roles;
             try
             {
-
+                users.Shuffle();
                 switch (users.Count)
                 {
                     case 5:
@@ -67,11 +68,10 @@ namespace Secret_Hitler_Backend.Models
                                 RoomId = RoomId
                             });
                         }
-                        Players[0].Role = Role.Hitler;
-                        Players[1].Role = Role.Fascist;
-                        Players[2].Role = Role.Liberal;
-                        Players[3].Role = Role.Liberal;
-                        Players[4].Role = Role.Liberal;
+                        roles = new Role[] { Role.Hitler, Role.Fascist, Role.Liberal, Role.Liberal, Role.Liberal };
+                        roles.Shuffle();
+                        for(int i = 0;i<users.Count;i++)
+                        Players[i].Role = roles[i];
                         break;
                     case 6:
                         foreach (var u in users)
@@ -85,12 +85,10 @@ namespace Secret_Hitler_Backend.Models
                                 RoomId = RoomId
                             });
                         }
-                        Players[0].Role = Role.Hitler;
-                        Players[1].Role = Role.Fascist;
-                        Players[2].Role = Role.Liberal;
-                        Players[3].Role = Role.Liberal;
-                        Players[4].Role = Role.Liberal;
-                        Players[5].Role = Role.Liberal;
+                        roles = new Role[] { Role.Hitler, Role.Fascist, Role.Liberal, Role.Liberal, Role.Liberal, Role.Liberal };
+                        roles.Shuffle();
+                        for (int i = 0; i < users.Count; i++)
+                            Players[i].Role = roles[i];
                         break;
                     case 7:
                         foreach (var u in users)
@@ -104,13 +102,10 @@ namespace Secret_Hitler_Backend.Models
                                 RoomId = RoomId
                             });
                         }
-                        Players[0].Role = Role.Hitler;
-                        Players[1].Role = Role.Fascist;
-                        Players[2].Role = Role.Fascist;
-                        Players[3].Role = Role.Liberal;
-                        Players[4].Role = Role.Liberal;
-                        Players[5].Role = Role.Liberal;
-                        Players[6].Role = Role.Liberal;
+                        roles = new Role[] { Role.Hitler, Role.Fascist, Role.Fascist, Role.Liberal, Role.Liberal, Role.Liberal, Role.Liberal };
+                        roles.Shuffle();
+                        for (int i = 0; i < users.Count; i++)
+                            Players[i].Role = roles[i];
                         break;
                     case 8:
                         foreach (var u in users)
@@ -124,14 +119,11 @@ namespace Secret_Hitler_Backend.Models
                                 RoomId = RoomId
                             });
                         }
-                        Players[0].Role = Role.Hitler;
-                        Players[1].Role = Role.Fascist;
-                        Players[2].Role = Role.Fascist;
-                        Players[3].Role = Role.Liberal;
-                        Players[4].Role = Role.Liberal;
-                        Players[5].Role = Role.Liberal;
-                        Players[6].Role = Role.Liberal;
-                        Players[7].Role = Role.Liberal;
+                        roles = new Role[] { Role.Hitler, Role.Fascist, Role.Fascist, Role.Liberal, Role.Liberal,
+                            Role.Liberal,Role.Liberal, Role.Liberal };
+                        roles.Shuffle();
+                        for (int i = 0; i < users.Count; i++)
+                            Players[i].Role = roles[i];
                         break;
                     case 9:
                         foreach (var u in users)
@@ -145,15 +137,11 @@ namespace Secret_Hitler_Backend.Models
                                 RoomId = RoomId
                             });
                         }
-                        Players[0].Role = Role.Hitler;
-                        Players[1].Role = Role.Fascist;
-                        Players[2].Role = Role.Fascist;
-                        Players[3].Role = Role.Fascist;
-                        Players[4].Role = Role.Liberal;
-                        Players[5].Role = Role.Liberal;
-                        Players[6].Role = Role.Liberal;
-                        Players[7].Role = Role.Liberal;
-                        Players[8].Role = Role.Liberal;
+                        roles = new Role[] { Role.Hitler, Role.Fascist, Role.Fascist, Role.Fascist, Role.Liberal, Role.Liberal,
+                            Role.Liberal,Role.Liberal, Role.Liberal };
+                        roles.Shuffle();
+                        for (int i = 0; i < users.Count; i++)
+                            Players[i].Role = roles[i];
                         break;
                     case 10:
                         foreach (var u in users)
@@ -167,16 +155,11 @@ namespace Secret_Hitler_Backend.Models
                                 RoomId = RoomId
                             });
                         }
-                        Players[0].Role = Role.Hitler;
-                        Players[1].Role = Role.Fascist;
-                        Players[2].Role = Role.Fascist;
-                        Players[3].Role = Role.Fascist;
-                        Players[4].Role = Role.Fascist;
-                        Players[5].Role = Role.Liberal;
-                        Players[6].Role = Role.Liberal;
-                        Players[7].Role = Role.Liberal;
-                        Players[8].Role = Role.Liberal;
-                        Players[9].Role = Role.Liberal;
+                        roles = new Role[] { Role.Hitler, Role.Fascist, Role.Fascist, Role.Fascist, Role.Liberal, Role.Liberal,
+                            Role.Liberal,Role.Liberal, Role.Liberal , Role.Liberal };
+                        roles.Shuffle();
+                        for (int i = 0; i < users.Count; i++)
+                            Players[i].Role = roles[i];
                         break;
                 }
 
